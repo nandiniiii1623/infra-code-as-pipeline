@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps CI/CD Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🚀 E-Commerce CI/CD Dashboard</h1>
+    <h1>Version 2</h1>
+    <h2>Infrastructure Status</h2>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Terraform</h3>
+            <p id="terraform">✔ Provisioned</p>
+        </div>
+
+        <div class="card">
+            <h3>ECS</h3>
+            <p id="ecs">✔ Running</p>
+        </div>
+
+        <div class="card">
+            <h3>Docker</h3>
+            <p id="docker">✔ Healthys</p>
+        </div>
+
+        <div class="card">
+            <h3>Pipeline</h3>
+            <p id="pipeline">Waiting...</p>
+        </div>
+
+    </div>
+
+    <br>
+
+    <button onclick="deploy()">Deploy New Version of git</button>
+
+    <div class="log">
+        <h2>Deployment Logs</h2>
+
+        <ul id="logs">
+            <li>Application Ready...</li>
+        </ul>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
