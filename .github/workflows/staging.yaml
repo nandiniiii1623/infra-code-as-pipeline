@@ -10,6 +10,7 @@ env:
   ECR_REPOSITORY: ecommerce-staging
   ECS_CLUSTER: ecommerce-staging-cluster
   ECS_SERVICE: ecommerce-staging-service
+  AWS_ACCOUNT_ID: 343980058896
 
 jobs:
   staging:
@@ -17,6 +18,7 @@ jobs:
     environment: staging
 
     steps:
+
       # 1. Checkout code
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,27 +33,30 @@ jobs:
 
       # 3. Test AWS credentials
       - name: Test AWS credentials
-        run: aws sts get-caller-identity
+        run: |
+          aws sts get-caller-identity
 
       # 4. Login to Amazon ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
       # 5. Build Docker image
-      - name: Build image
-        run: docker build -t $ECR_REPOSITORY ./app
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY ./app
 
       # 6. Tag Docker image
-      - name: Tag image
+      - name: Tag Docker image
         run: |
-          docker tag $ECR_REPOSITORY:latest \
-            343980058896.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPOSITORY:latest
+          docker tag \
+            $ECR_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
-      # 7. Push Docker image
-      - name: Push image
+      # 7. Push Docker image to ECR
+      - name: Push Docker image
         run: |
           docker push \
-            343980058896.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPOSITORY:latest
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
       # 8. Deploy to ECS
       - name: Deploy to ECS
@@ -70,10 +75,10 @@ jobs:
             --services $ECS_SERVICE \
             --region $AWS_REGION
 
-      # 10. Deployment completed
+      # 10. Success
       - name: Deployment successful
         run: |
           echo "Staging deployment completed successfully."
+          echo "ECR Repository: $ECR_REPOSITORY"
           echo "ECS Cluster: $ECS_CLUSTER"
           echo "ECS Service: $ECS_SERVICE"
-          echo "ECR Repository: $ECR_REPOSITORY"
