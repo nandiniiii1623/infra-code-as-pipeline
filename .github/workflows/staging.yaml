@@ -1,22 +1,79 @@
-# 13. Deploy to ECS
-- name: Deploy to ECS
-  run: |
-    aws ecs update-service \
-      --cluster $ECS_CLUSTER \
-      --service $ECS_SERVICE \
-      --force-new-deployment
+name: Deploy to Staging
 
-# 14. Wait for ECS deployment
-- name: Wait for ECS deployment
-  run: |
-    aws ecs wait services-stable \
-      --cluster $ECS_CLUSTER \
-      --services $ECS_SERVICE
+on:
+  push:
+    branches:
+      - feature/ecommerce-deployment
 
-# 15. Deployment completed
-- name: Deployment successful
-  run: |
-    echo "Staging deployment completed successfully."
-    echo "ECS Cluster: $ECS_CLUSTER"
-    echo "ECS Service: $ECS_SERVICE"
-    echo "ECR Repository: $ECR_REPOSITORY"
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: ecommerce-staging
+  ECS_CLUSTER: ecommerce-staging-cluster
+  ECS_SERVICE: ecommerce-staging-service
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 3. Test AWS credentials
+      - name: Test AWS credentials
+        run: aws sts get-caller-identity
+
+      # 4. Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 5. Build Docker image
+      - name: Build image
+        run: docker build -t $ECR_REPOSITORY ./app
+
+      # 6. Tag Docker image
+      - name: Tag image
+        run: |
+          docker tag $ECR_REPOSITORY:latest \
+            343980058896.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPOSITORY:latest
+
+      # 7. Push Docker image
+      - name: Push image
+        run: |
+          docker push \
+            343980058896.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPOSITORY:latest
+
+      # 8. Deploy to ECS
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment \
+            --region $AWS_REGION
+
+      # 9. Wait for ECS deployment
+      - name: Wait for ECS deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --region $AWS_REGION
+
+      # 10. Deployment completed
+      - name: Deployment successful
+        run: |
+          echo "Staging deployment completed successfully."
+          echo "ECS Cluster: $ECS_CLUSTER"
+          echo "ECS Service: $ECS_SERVICE"
+          echo "ECR Repository: $ECR_REPOSITORY"
